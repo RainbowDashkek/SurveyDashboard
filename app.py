@@ -229,7 +229,7 @@ st.set_page_config(page_title="Survey Dashboard", layout="wide")
 st.title("Project Survey Dashboard")
 
 # Display the timestamp right under the title
-st.caption(f"Letztes Daten-Update: **{last_update_time} Uhr** (wird bei Aufruf automatisch alle 5 Minuten aktualisiert)")
+st.caption(f"Letztes Daten-Update: **{last_update_time} Uhr** (wird bei Aufruf automatisch alle 10 Minuten aktualisiert)")
 
 # Create Dashboard Tabs
 tab_progress, tab_demo, tab_reading, tab_donation, tab_rankings = st.tabs([
