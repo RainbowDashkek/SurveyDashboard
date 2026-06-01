@@ -115,23 +115,28 @@ dropout_data = df_unfinished['LASTPAGE'].value_counts().reset_index()
 dropout_data.columns = ['Page', 'Dropouts']
 dropout_data = dropout_data.sort_values(by='Page')
 
-# Response Timeline Calculations (Cumulative)
+# Response Timeline Calculations (Cumulative, Hour-by-Hour resolution)
 raw_df['STARTED'] = pd.to_datetime(raw_df['STARTED'], errors='coerce')
 df_finished_raw['STARTED'] = pd.to_datetime(df_finished_raw['STARTED'], errors='coerce')
 
-daily_starts = raw_df.groupby(raw_df['STARTED'].dt.date).size().reset_index()
-daily_starts.columns = ['Date', 'Gestartet']
+# Group counts by Hour instead of calendar Date
+hourly_starts = raw_df.groupby(raw_df['STARTED'].dt.floor('h')).size().reset_index()
+hourly_starts.columns = ['Time', 'Gestartet']
 
-daily_completes = df_finished_raw.groupby(df_finished_raw['STARTED'].dt.date).size().reset_index()
-daily_completes.columns = ['Date', 'Ausgefüllt']
+hourly_completes = df_finished_raw.groupby(df_finished_raw['STARTED'].dt.floor('h')).size().reset_index()
+hourly_completes.columns = ['Time', 'Ausgefüllt']
 
-timeline_data = pd.merge(daily_starts, daily_completes, on='Date', how='outer').fillna(0)
-timeline_data = timeline_data.sort_values(by='Date')
+# Merge on Time and sort chronologically
+timeline_data = pd.merge(hourly_starts, hourly_completes, on='Time', how='outer').fillna(0)
+timeline_data = timeline_data.sort_values(by='Time')
+
+# Calculate cumulative running totals
 timeline_data['Gestartet_Cum'] = timeline_data['Gestartet'].cumsum()
 timeline_data['Ausgefüllt_Cum'] = timeline_data['Ausgefüllt'].cumsum()
 
+# Melt the cumulative columns for plotting
 timeline_melted = timeline_data.melt(
-    id_vars='Date', 
+    id_vars='Time', 
     value_vars=['Gestartet_Cum', 'Ausgefüllt_Cum'], 
     var_name='Status', 
     value_name='Count'
@@ -260,12 +265,12 @@ with tab_progress:
 
     st.markdown("---")
 
-    # Response Timeline
+    # Response Timeline (Hour-by-Hour)
     st.subheader("Rücklauf im Zeitverlauf (Akkumuliert)")
     if len(timeline_melted) > 0:
         fig_timeline = px.line(
             timeline_melted,
-            x="Date",
+            x="Time",              # <--- Changed from "Date" to "Time"
             y="Count",
             color="Status",
             markers=True,
@@ -274,7 +279,12 @@ with tab_progress:
                 "Ausgefüllt (insgesamt)": "#3498db"
             }
         )
-        fig_timeline.update_layout(xaxis_title=None, yaxis_title="Anzahl", template="simple_white", legend_title=None)
+        fig_timeline.update_layout(
+            xaxis_title=None, 
+            yaxis_title="Anzahl", 
+            template="simple_white", 
+            legend_title=None
+        )
         st.plotly_chart(fig_timeline, width='stretch')
 
     st.markdown("---")
