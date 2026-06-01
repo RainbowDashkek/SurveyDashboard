@@ -3,9 +3,6 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 
-# 1. Page Configuration
-st.set_page_config(page_title="Survey Project Dashboard", layout="wide")
-st.title("Project Survey Dashboard")
 
 # 2. Retrieve the secret URL securely from Streamlit's secrets
 try:
@@ -91,11 +88,15 @@ profession_map = {
 
 
 # ON THE CLOUD & LOCAL: Pull live data from SoSci Survey
-@st.cache_data(ttl=300)
+@st.cache_data(ttl=600)
 def load_data(url):
-    return pd.read_csv(url, encoding="utf-16", sep="\t")
+    df = pd.read_csv(url, encoding="utf-16", sep="\t")
+    # Record the exact time the API was queried (using Europe/Berlin timezone)
+    fetch_time = pd.Timestamp.now(tz='Europe/Berlin').strftime("%d.%m.%Y, %H:%M:%S")
+    return df, fetch_time
 
-raw_df = load_data(sosci_url)
+# Unpack both the raw dataframe and the timestamp
+raw_df, last_update_time = load_data(sosci_url)
 
 # -------------------------------------------------------------
 # 1. SURVEY PROGRESS ANALYSIS (Using All Cases)
@@ -223,6 +224,12 @@ if f_prev_donate != "Alle":
 # =============================================================================
 # VISUAL LAYOUT (WITH TABS)
 # =============================================================================
+# 1. Page Configuration
+st.set_page_config(page_title="Survey Dashboard", layout="wide")
+st.title("Project Survey Dashboard")
+
+# Display the timestamp right under the title
+st.caption(f"Letztes Daten-Update: **{last_update_time} Uhr** (wird bei Aufruf automatisch alle 5 Minuten aktualisiert)")
 
 # Create Dashboard Tabs
 tab_progress, tab_demo, tab_reading, tab_donation, tab_rankings = st.tabs([
