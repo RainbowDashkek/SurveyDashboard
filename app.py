@@ -318,9 +318,9 @@ with tab_demo:
             gender_clean = df_filtered.dropna(subset=['gender'])
             
             gender_colors = {
-                "weiblich": "#F9B7B2",
-                "männlich": "#B2D8F9",
-                "divers": "#B2F9D8"
+                "weiblich": "#00BE00",
+                "männlich": "#1C3EFF",
+                "divers": "#E5FF00"
             }
             
             fig_gender = px.pie(
